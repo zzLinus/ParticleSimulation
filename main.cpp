@@ -70,22 +70,46 @@ bool cmpPos2D(Pos2D *p1, Pos2D *p2) {
 
 void Particle::HandleMovement(std::vector<Particle *> particles,
                               uint16_t size) {
-  // bool canMoveL, canMoveR, canMoveD;
-  // Pos2D pDPos, pLPos, pRPos;
-  // pDPos.X = this->particlePos->X;
-  // pDPos.Y = this->particlePos->Y + 1;
-  // pLPos.X = this->particlePos->X - 1;
-  // pLPos.Y = this->particlePos->Y + 1;
-  // pRPos.X = this->particlePos->X + 1;
-  // pRPos.Y = this->particlePos->Y + 1;
-  // for (int idx = 0; idx < size; idx++) {
-  //   if (cmpPos2D(particles[idx]->particlePos, &pDPos)) {
-  //     this->particlePos->Y + 1;
-  //     std::cout << "particle drop"
-  //               << "\n";
-  //   }
-  // }
-  this->particlePos->Y++;
+  Pos2D pDPos, pLPos, pRPos;
+  uint16_t flags = 0;
+  pDPos.X = this->particlePos->X;
+  pDPos.Y = this->particlePos->Y + 1;
+  pLPos.X = this->particlePos->X - 1;
+  pLPos.Y = this->particlePos->Y + 1;
+  pRPos.X = this->particlePos->X + 1;
+  pRPos.Y = this->particlePos->Y + 1;
+  for (int idx = 0; idx < size; idx++) {
+    if (cmpPos2D(particles[idx]->particlePos, &pDPos)) {
+      flags |= 1;
+    }
+    if (cmpPos2D(particles[idx]->particlePos, &pLPos)) {
+      flags |= 2;
+    }
+    if (cmpPos2D(particles[idx]->particlePos, &pRPos)) {
+      flags |= 4;
+    }
+  }
+  if (this->particlePos->Y == 239 || flags == 7)
+    return;
+  if (flags == 1) {
+    if (rand() > 0.5) {
+      this->particlePos->X++;
+      this->particlePos->Y++;
+    } else {
+      this->particlePos->X--;
+      this->particlePos->Y++;
+    }
+  }
+  if (flags == 0 || flags == 2 || flags == 4)
+    this->particlePos->Y++;
+  if (flags == 3) {
+    this->particlePos->X++;
+    this->particlePos->Y++;
+  }
+  if (flags == 5) {
+    this->particlePos->X--;
+    this->particlePos->Y++;
+  }
 }
 
 void Particle::iniParticleColor(uint8_t pType) {
@@ -121,7 +145,15 @@ bool SandSimu::OnUserUpdate(float fElapsedTime) {
     this->mousePos->Y = uint16_t(GetMouseY());
     Particle *p = new Particle(SAND, mousePos->X, mousePos->Y);
     particles.push_back(p);
+  } else if (GetMouse(1).bHeld) {
+    this->mousePos->X = uint16_t(GetMouseX());
+    this->mousePos->Y = uint16_t(GetMouseY());
+    Particle *p = new Particle(WATER, mousePos->X, mousePos->Y);
+    particles.push_back(p);
+  } else if (GetMouse(2).bHeld) {
+    particles.clear();
   }
+
   // for (int pIdx = 0; pIdx < particles.size(); pIdx++)
   for (Particle *p : particles) {
     p->HandleMovement(particles, particles.size());
