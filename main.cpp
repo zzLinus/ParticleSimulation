@@ -79,58 +79,64 @@ void Particle::HandleMovement(uint8_t **particleTable) {
   pLPos.Y = this->particlePos->Y + 1;
   pRPos.X = this->particlePos->X + 1;
   pRPos.Y = this->particlePos->Y + 1;
-  // for (int idx = 0; idx < size; idx++) {
-  //   if (cmpPos2D(particles[idx]->particlePos, &pDPos)) {
-  //     flags |= 1;
-  //   }
-  //   if (cmpPos2D(particles[idx]->particlePos, &pLPos)) {
-  //     flags |= 2;
-  //   }
-  //   if (cmpPos2D(particles[idx]->particlePos, &pRPos)) {
-  //     flags |= 4;
-  //   }
-  // }
   if (this->particlePos->Y == 239)
     return;
 
-  if (particleTable[pDPos.Y][pDPos.X] == SAND)
-    flags |= 1;
-  if (particleTable[pLPos.Y][pLPos.X] == SAND)
-    flags |= 2;
-  if (particleTable[pRPos.Y][pRPos.X] == SAND)
-    flags |= 4;
+  if (particleType == SAND) {
+    if (particleTable[pDPos.Y][pDPos.X] == SAND)
+      flags |= 1;
+    if (particleTable[pLPos.Y][pLPos.X] == SAND)
+      flags |= 2;
+    if (particleTable[pRPos.Y][pRPos.X] == SAND)
+      flags |= 4;
 
-  if (flags == 7)
-    return;
-  if (flags == 1) {
-    if (rand() > 0.5) {
+    if (flags == 7)
+      return;
+    if (flags == 1) {
+      if (rand() > 0.5) {
+        particleTable[this->particlePos->Y][this->particlePos->X] = 10;
+        this->particlePos->X++;
+        this->particlePos->Y++;
+        particleTable[this->particlePos->Y][this->particlePos->X] =
+            particleType;
+      } else {
+        particleTable[this->particlePos->Y][this->particlePos->X] = 10;
+        this->particlePos->X--;
+        this->particlePos->Y++;
+        particleTable[this->particlePos->Y][this->particlePos->X] =
+            particleType;
+      }
+    }
+    if (flags == 0 || flags == 2 || flags == 4) {
+      particleTable[this->particlePos->Y][this->particlePos->X] = 10;
+      this->particlePos->Y++;
+      particleTable[this->particlePos->Y][this->particlePos->X] = particleType;
+    }
+    if (flags == 3) {
       particleTable[this->particlePos->Y][this->particlePos->X] = 10;
       this->particlePos->X++;
       this->particlePos->Y++;
       particleTable[this->particlePos->Y][this->particlePos->X] = particleType;
-    } else {
+    }
+    if (flags == 5) {
       particleTable[this->particlePos->Y][this->particlePos->X] = 10;
       this->particlePos->X--;
       this->particlePos->Y++;
       particleTable[this->particlePos->Y][this->particlePos->X] = particleType;
     }
-  }
-  if (flags == 0 || flags == 2 || flags == 4) {
-    particleTable[this->particlePos->Y][this->particlePos->X] = 10;
-    this->particlePos->Y++;
-    particleTable[this->particlePos->Y][this->particlePos->X] = particleType;
-  }
-  if (flags == 3) {
-    particleTable[this->particlePos->Y][this->particlePos->X] = 10;
-    this->particlePos->X++;
-    this->particlePos->Y++;
-    particleTable[this->particlePos->Y][this->particlePos->X] = particleType;
-  }
-  if (flags == 5) {
-    particleTable[this->particlePos->Y][this->particlePos->X] = 10;
-    this->particlePos->X--;
-    this->particlePos->Y++;
-    particleTable[this->particlePos->Y][this->particlePos->X] = particleType;
+  } else if (particleType == WATER) {
+    if (particleTable[pDPos.Y][pDPos.X] == SAND ||
+        particleTable[pDPos.Y][pDPos.X] == WATER)
+      flags |= 1;
+    if (particleTable[pLPos.Y][pLPos.X] == SAND ||
+        particleTable[pLPos.Y][pLPos.X] == WATER)
+      flags |= 2;
+    if (particleTable[pRPos.Y][pRPos.X] == SAND ||
+        particleTable[pLPos.Y][pLPos.X] == WATER)
+      flags |= 4;
+
+    if (flags == 7)
+      return;
   }
 }
 
