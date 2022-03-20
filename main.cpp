@@ -124,19 +124,6 @@ void Particle::HandleMovement(uint8_t **particleTable) {
       this->particlePos->Y++;
       particleTable[this->particlePos->Y][this->particlePos->X] = particleType;
     }
-  } else if (particleType == WATER) {
-    if (particleTable[pDPos.Y][pDPos.X] == SAND ||
-        particleTable[pDPos.Y][pDPos.X] == WATER)
-      flags |= 1;
-    if (particleTable[pLPos.Y][pLPos.X] == SAND ||
-        particleTable[pLPos.Y][pLPos.X] == WATER)
-      flags |= 2;
-    if (particleTable[pRPos.Y][pRPos.X] == SAND ||
-        particleTable[pLPos.Y][pLPos.X] == WATER)
-      flags |= 4;
-
-    if (flags == 7)
-      return;
   }
 }
 
@@ -192,6 +179,9 @@ bool SandSimu::OnUserUpdate(float fElapsedTime) {
     particleTable[mousePos->Y][mousePos->X] = WATER;
     particles.push_back(p);
   } else if (GetMouse(2).bHeld) {
+    for (int col = 0; col < ScreenHeight(); col++)
+      for (int row = 0; row < ScreenWidth(); row++)
+        *(*(particleTable + col) + row) = 10;
     particles.clear();
   }
 
