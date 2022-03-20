@@ -9,9 +9,9 @@
 // Struct declaration
 typedef struct Pos2D Pos2D;
 typedef struct ParticleColor ParticleColor;
-enum { SAND, WATER, STONE };
+enum { SAND, WATER, STONE, HOLE };
 
-// Classes declaration
+// ==>Particle Parent Class(the solid particles)
 class Particle {
 public:
   Particle(uint8_t particleType, uint16_t X, uint16_t Y);
@@ -21,10 +21,20 @@ public:
   ParticleColor *pColor;
   uint8_t particleType;
 
-  void HandleMovement(uint8_t **particleTable);
+  virtual void HandleMovement(uint8_t **particleTable);
 
 private:
   void iniParticleColor(uint8_t partiType);
+};
+
+// ==>LiquidParticle Class
+class LiquidParticle : public Particle {
+public:
+  LiquidParticle(uint8_t particleType, uint16_t X, uint16_t Y);
+  virtual void HandleMovement(uint8_t **particleTable);
+  uint8_t floatDir;
+
+private:
 };
 
 class SandSimu : public olc::PixelGameEngine {
@@ -36,6 +46,7 @@ public:
 
 public:
   std::vector<Particle *> particles;
+  std::vector<LiquidParticle *> liquidParticles;
 
 private:
   Pos2D *mousePos;
@@ -60,6 +71,86 @@ Particle::Particle(uint8_t particleType, uint16_t X, uint16_t Y) {
   particlePos->X = X;
   particlePos->Y = Y;
   iniParticleColor(particleType);
+}
+
+LiquidParticle::LiquidParticle(uint8_t particleType, uint16_t X, uint16_t Y)
+    : Particle(particleType, X, Y) {
+  floatDir = 255;
+};
+
+void LiquidParticle::HandleMovement(uint8_t **particleTable) {
+  Pos2D aroundPos[8];
+  aroundPos[0].X = particlePos->X - 1;
+  aroundPos[0].Y = particlePos->Y - 1;
+  aroundPos[1].X = particlePos->X;
+  aroundPos[1].Y = particlePos->Y - 1;
+  aroundPos[2].X = particlePos->X + 1;
+  aroundPos[2].Y = particlePos->Y - 1;
+  aroundPos[3].X = particlePos->X + 1;
+  aroundPos[3].Y = particlePos->Y;
+  aroundPos[4].X = particlePos->X + 1;
+  aroundPos[4].Y = particlePos->Y + 1;
+  aroundPos[5].X = particlePos->X;
+  aroundPos[5].Y = particlePos->Y + 1;
+  aroundPos[6].X = particlePos->X - 1;
+  aroundPos[6].Y = particlePos->Y + 1;
+  aroundPos[7].X = particlePos->X - 1;
+  aroundPos[7].Y = particlePos->Y;
+  uint16_t flags = 0;
+  if (this->particlePos->Y == 239)
+    return;
+
+  if (particleType == WATER) {
+    for (int idx = 0; idx < 8; idx++)
+      if (particleTable[aroundPos[idx].Y][aroundPos[idx].X] == WATER ||
+          particleTable[aroundPos[idx].Y][aroundPos[idx].X] == HOLE)
+        flags |= (1 << idx);
+      else if (particleTable[aroundPos[idx].Y][aroundPos[idx].X] == SAND)
+        flags |= (1 << (idx + 8));
+    // ^ 2
+    // < -1
+    // > 1
+    // v 3
+    //
+
+    if ((flags & 0x2020) == 0x00) {
+      particleTable[this->particlePos->Y][this->particlePos->X] = 10;
+      this->particlePos->Y++;
+      particleTable[this->particlePos->Y][this->particlePos->X] = particleType;
+    } else if ((flags & 0x1010) == 0x00) {
+      particleTable[this->particlePos->Y][this->particlePos->X] = 10;
+      this->particlePos->X++;
+      this->particlePos->Y++;
+      particleTable[this->particlePos->Y][this->particlePos->X] = particleType;
+    } else if ((flags & 0x4040) == 0x00) {
+      particleTable[this->particlePos->Y][this->particlePos->X] = 10;
+      this->particlePos->X--;
+      this->particlePos->Y++;
+      particleTable[this->particlePos->Y][this->particlePos->X] = particleType;
+    } else if ((flags & 0x8080) == 0x00 && (flags & 0x0808) != 0x00) {
+      particleTable[this->particlePos->Y][this->particlePos->X] = 10;
+      this->particlePos->X--;
+      particleTable[this->particlePos->Y][this->particlePos->X] = particleType;
+    } else if ((flags & 0x0808) == 0x00 && (flags & 0x8080) != 0x00) {
+      particleTable[this->particlePos->Y][this->particlePos->X] = 10;
+      this->particlePos->X++;
+      particleTable[this->particlePos->Y][this->particlePos->X] = particleType;
+    } else if ((flags & 0x0200) != 0x00) {
+      particleTable[this->particlePos->Y][this->particlePos->X] = HOLE;
+      this->particlePos->Y--;
+      particleTable[this->particlePos->Y][this->particlePos->X] = particleType;
+    } else if ((flags & 0x0400) != 0x00) {
+      particleTable[this->particlePos->Y][this->particlePos->X] = HOLE;
+      this->particlePos->X++;
+      this->particlePos->Y--;
+      particleTable[this->particlePos->Y][this->particlePos->X] = particleType;
+    } else if ((flags & 0x0100) != 0x00) {
+      particleTable[this->particlePos->Y][this->particlePos->X] = HOLE;
+      this->particlePos->X--;
+      this->particlePos->Y--;
+      particleTable[this->particlePos->Y][this->particlePos->X] = particleType;
+    }
+  }
 }
 
 bool cmpPos2D(Pos2D *p1, Pos2D *p2) {
@@ -107,7 +198,7 @@ void Particle::HandleMovement(uint8_t **particleTable) {
             particleType;
       }
     }
-    if (flags == 0 || flags == 2 || flags == 4) {
+    if (flags == 0 || flags == 2 || flags == 4 || flags == 6) {
       particleTable[this->particlePos->Y][this->particlePos->X] = 10;
       this->particlePos->Y++;
       particleTable[this->particlePos->Y][this->particlePos->X] = particleType;
@@ -175,14 +266,20 @@ bool SandSimu::OnUserUpdate(float fElapsedTime) {
   } else if (GetMouse(1).bHeld) {
     this->mousePos->X = uint16_t(GetMouseX());
     this->mousePos->Y = uint16_t(GetMouseY());
-    Particle *p = new Particle(WATER, mousePos->X, mousePos->Y);
+    LiquidParticle *p = new LiquidParticle(WATER, mousePos->X, mousePos->Y);
     particleTable[mousePos->Y][mousePos->X] = WATER;
-    particles.push_back(p);
+    liquidParticles.push_back(p);
   } else if (GetMouse(2).bHeld) {
     for (int col = 0; col < ScreenHeight(); col++)
       for (int row = 0; row < ScreenWidth(); row++)
         *(*(particleTable + col) + row) = 10;
     particles.clear();
+    liquidParticles.clear();
+  }
+  for (LiquidParticle *p : liquidParticles) {
+    p->HandleMovement(particleTable);
+    Draw(p->particlePos->X, p->particlePos->Y,
+         olc::Pixel(p->pColor->R, p->pColor->G, p->pColor->B));
   }
 
   // for (int pIdx = 0; pIdx < particles.size(); pIdx++)
