@@ -9,13 +9,18 @@
 // Struct declaration
 typedef struct Pos2D Pos2D;
 typedef struct ParticleColor ParticleColor;
+typedef struct ParticlePointer ParticlePointer;
 class LiquidParticle;
 class Particle;
+
 enum { SAND, WATER, STONE };
-union ParticlePointer {
+
+struct ParticlePointer {
   LiquidParticle *lp;
   Particle *p;
 };
+
+void ChangeParticlePointer(ParticlePointer p1, ParticlePointer p2);
 
 // ==>Particle Parent Class(the solid particles)
 class Particle {
@@ -27,7 +32,8 @@ public:
   ParticleColor *pColor;
   uint8_t particleType;
 
-  virtual void HandleMovement(uint8_t **particleTable);
+  virtual void HandleMovement(uint8_t **particleTable,
+                              ParticlePointer **particlePointerTable);
 
 private:
   void iniParticleColor(uint8_t partiType);
@@ -151,7 +157,8 @@ bool cmpPos2D(Pos2D *p1, Pos2D *p2) {
   return true;
 }
 
-void Particle::HandleMovement(uint8_t **particleTable) {
+void Particle::HandleMovement(uint8_t **particleTable,
+                              ParticlePointer **particlePointerTable) {
   Pos2D aroundPos[8];
   aroundPos[0].X = particlePos->X - 1;
   aroundPos[0].Y = particlePos->Y - 1;
@@ -261,8 +268,10 @@ bool SandSimu::OnUserCreate() {
         (ParticlePointer *)std::malloc(sizeof(ParticlePointer) * ScreenWidth());
   }
   for (int row = 0; row < ScreenWidth(); row++)
-    for (int col = 0; col < ScreenHeight(); col++)
+    for (int col = 0; col < ScreenHeight(); col++) {
       particleTable[col][row] = 10;
+      particlePointerTable[col][row] = {nullptr, nullptr};
+    }
   this->mousePos = new Pos2D;
   return true;
 }
@@ -299,10 +308,18 @@ bool SandSimu::OnUserUpdate(float fElapsedTime) {
 
   // for (int pIdx = 0; pIdx < particles.size(); pIdx++)
   for (Particle *p : particles) {
-    p->HandleMovement(particleTable);
+    p->HandleMovement(particleTable, particlePointerTable);
     Draw(p->particlePos->X, p->particlePos->Y,
          olc::Pixel(p->pColor->R, p->pColor->G, p->pColor->B));
   }
+
+  for (int row = 0; row < ScreenHeight(); row++)
+    for (int col = 0; col < ScreenWidth(); col++) {
+      if (particlePointerTable[row][col].lp != nullptr)
+        std::printf("liquid:%p\n", particlePointerTable[row][col].lp);
+      if (particlePointerTable[row][col].p != nullptr)
+        std::printf("sand:  %p\n", particlePointerTable[row][col].p);
+    }
 
   return true;
 }
