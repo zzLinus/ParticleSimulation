@@ -43,7 +43,8 @@ private:
 class LiquidParticle : public Particle {
 public:
   LiquidParticle(uint8_t particleType, uint16_t X, uint16_t Y);
-  virtual void HandleMovement(uint8_t **particleTable);
+  virtual void HandleMovement(uint8_t **particleTable,
+                              ParticlePointer **particlePointerTable);
   uint8_t floatDir;
 
 private:
@@ -91,7 +92,8 @@ LiquidParticle::LiquidParticle(uint8_t particleType, uint16_t X, uint16_t Y)
   floatDir = 255;
 };
 
-void LiquidParticle::HandleMovement(uint8_t **particleTable) {
+void LiquidParticle::HandleMovement(uint8_t **particleTable,
+                                    ParticlePointer **particlePointerTable) {
   Pos2D aroundPos[8];
   aroundPos[0].X = particlePos->X - 1;
   aroundPos[0].Y = particlePos->Y - 1;
@@ -122,26 +124,49 @@ void LiquidParticle::HandleMovement(uint8_t **particleTable) {
     // < -1
     // > 1
     //
+    //
 
     if ((flags & 0x2020) == 0x00) {
+      particlePointerTable[this->particlePos->Y + 1][this->particlePos->X].lp =
+          particlePointerTable[this->particlePos->Y][this->particlePos->X].lp;
+      particlePointerTable[this->particlePos->Y][this->particlePos->X].lp =
+          nullptr;
       particleTable[this->particlePos->Y][this->particlePos->X] = 10;
       this->particlePos->Y++;
       particleTable[this->particlePos->Y][this->particlePos->X] = particleType;
     } else if ((flags & 0x1010) == 0x00) {
+      particlePointerTable[this->particlePos->Y + 1][this->particlePos->X + 1]
+          .lp =
+          particlePointerTable[this->particlePos->Y][this->particlePos->X].lp;
+      particlePointerTable[this->particlePos->Y][this->particlePos->X].lp =
+          nullptr;
       particleTable[this->particlePos->Y][this->particlePos->X] = 10;
       this->particlePos->X++;
       this->particlePos->Y++;
       particleTable[this->particlePos->Y][this->particlePos->X] = particleType;
     } else if ((flags & 0x4040) == 0x00) {
+      particlePointerTable[this->particlePos->Y + 1][this->particlePos->X - 1]
+          .lp =
+          particlePointerTable[this->particlePos->Y][this->particlePos->X].lp;
+      particlePointerTable[this->particlePos->Y][this->particlePos->X].lp =
+          nullptr;
       particleTable[this->particlePos->Y][this->particlePos->X] = 10;
       this->particlePos->X--;
       this->particlePos->Y++;
       particleTable[this->particlePos->Y][this->particlePos->X] = particleType;
     } else if ((flags & 0x8080) == 0x00 && (flags & 0x0808) != 0x00) {
+      particlePointerTable[this->particlePos->Y][this->particlePos->X - 1].lp =
+          particlePointerTable[this->particlePos->Y][this->particlePos->X].lp;
+      particlePointerTable[this->particlePos->Y][this->particlePos->X].lp =
+          nullptr;
       particleTable[this->particlePos->Y][this->particlePos->X] = 10;
       this->particlePos->X--;
       particleTable[this->particlePos->Y][this->particlePos->X] = particleType;
     } else if ((flags & 0x0808) == 0x00 && (flags & 0x8080) != 0x00) {
+      particlePointerTable[this->particlePos->Y][this->particlePos->X + 1].lp =
+          particlePointerTable[this->particlePos->Y][this->particlePos->X].lp;
+      particlePointerTable[this->particlePos->Y][this->particlePos->X].lp =
+          nullptr;
       particleTable[this->particlePos->Y][this->particlePos->X] = 10;
       this->particlePos->X++;
       particleTable[this->particlePos->Y][this->particlePos->X] = particleType;
@@ -191,6 +216,10 @@ void Particle::HandleMovement(uint8_t **particleTable,
     //
 
     if ((flags & 0x2020) == 0x00) {
+      particlePointerTable[this->particlePos->Y + 1][this->particlePos->X].p =
+          particlePointerTable[this->particlePos->Y][this->particlePos->X].p;
+      particlePointerTable[this->particlePos->Y][this->particlePos->X].p =
+          nullptr;
       particleTable[this->particlePos->Y][this->particlePos->X] = 10;
       this->particlePos->Y++;
       particleTable[this->particlePos->Y][this->particlePos->X] = particleType;
@@ -207,12 +236,22 @@ void Particle::HandleMovement(uint8_t **particleTable,
         goto RIGHT;
 
     LEFT:
+      particlePointerTable[this->particlePos->Y + 1][this->particlePos->X - 1]
+          .p =
+          particlePointerTable[this->particlePos->Y][this->particlePos->X].p;
+      particlePointerTable[this->particlePos->Y][this->particlePos->X].p =
+          nullptr;
       particleTable[this->particlePos->Y][this->particlePos->X] = 10;
       this->particlePos->X--;
       this->particlePos->Y++;
       particleTable[this->particlePos->Y][this->particlePos->X] = particleType;
       return;
     RIGHT:
+      particlePointerTable[this->particlePos->Y + 1][this->particlePos->X + 1]
+          .p =
+          particlePointerTable[this->particlePos->Y][this->particlePos->X].p;
+      particlePointerTable[this->particlePos->Y][this->particlePos->X].p =
+          nullptr;
       particleTable[this->particlePos->Y][this->particlePos->X] = 10;
       this->particlePos->X++;
       this->particlePos->Y++;
@@ -228,9 +267,27 @@ void Particle::HandleMovement(uint8_t **particleTable,
 
       else
         goto LEFT;
-    } else {
+    } else if ((flags & 0x20) == 0x20) {
+      particleTable[this->particlePos->Y][this->particlePos->X] = WATER;
+      particleTable[this->particlePos->Y + 1][this->particlePos->X] = SAND;
+
+      particlePointerTable[this->particlePos->Y + 1][this->particlePos->X].p =
+          particlePointerTable[this->particlePos->Y][this->particlePos->X].p;
+      particlePointerTable[this->particlePos->Y][this->particlePos->X].p =
+          nullptr;
+
+      particlePointerTable[this->particlePos->Y][this->particlePos->X].lp =
+          particlePointerTable[this->particlePos->Y + 1][this->particlePos->X]
+              .lp;
+      particlePointerTable[this->particlePos->Y + 1][this->particlePos->X].lp =
+          nullptr;
+
+      particlePointerTable[this->particlePos->Y][this->particlePos->X]
+          .lp->particlePos->Y--;
+      this->particlePos->Y++;
+
+    } else
       return;
-    }
   }
 }
 
@@ -301,7 +358,7 @@ bool SandSimu::OnUserUpdate(float fElapsedTime) {
     liquidParticles.clear();
   }
   for (LiquidParticle *p : liquidParticles) {
-    p->HandleMovement(particleTable);
+    p->HandleMovement(particleTable, particlePointerTable);
     Draw(p->particlePos->X, p->particlePos->Y,
          olc::Pixel(p->pColor->R, p->pColor->G, p->pColor->B));
   }
@@ -313,13 +370,13 @@ bool SandSimu::OnUserUpdate(float fElapsedTime) {
          olc::Pixel(p->pColor->R, p->pColor->G, p->pColor->B));
   }
 
-  for (int row = 0; row < ScreenHeight(); row++)
-    for (int col = 0; col < ScreenWidth(); col++) {
-      if (particlePointerTable[row][col].lp != nullptr)
-        std::printf("liquid:%p\n", particlePointerTable[row][col].lp);
-      if (particlePointerTable[row][col].p != nullptr)
-        std::printf("sand:  %p\n", particlePointerTable[row][col].p);
-    }
+  // for (int row = 0; row < ScreenHeight(); row++)
+  //   for (int col = 0; col < ScreenWidth(); col++) {
+  //     if (particlePointerTable[row][col].lp != nullptr)
+  //       std::printf("liquid:%p\n", particlePointerTable[row][col].lp);
+  //     if (particlePointerTable[row][col].p != nullptr)
+  //       std::printf("sand:  %p\n", particlePointerTable[row][col].p);
+  //   }
 
   return true;
 }
