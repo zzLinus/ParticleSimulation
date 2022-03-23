@@ -285,9 +285,55 @@ void Particle::HandleMovement(uint8_t **particleTable,
       particlePointerTable[this->particlePos->Y][this->particlePos->X]
           .lp->particlePos->Y--;
       this->particlePos->Y++;
+    } else if ((flags & 0x10) == 0x10) {
+      particleTable[this->particlePos->Y][this->particlePos->X] = WATER;
+      particleTable[this->particlePos->Y + 1][this->particlePos->X + 1] = SAND;
 
-    } else
+      particlePointerTable[this->particlePos->Y + 1][this->particlePos->X + 1]
+          .p =
+          particlePointerTable[this->particlePos->Y][this->particlePos->X].p;
+      particlePointerTable[this->particlePos->Y][this->particlePos->X].p =
+          nullptr;
+
+      particlePointerTable[this->particlePos->Y][this->particlePos->X].lp =
+          particlePointerTable[this->particlePos->Y + 1]
+                              [this->particlePos->X + 1]
+                                  .lp;
+      particlePointerTable[this->particlePos->Y + 1][this->particlePos->X + 1]
+          .lp = nullptr;
+
+      particlePointerTable[this->particlePos->Y][this->particlePos->X]
+          .lp->particlePos->Y--;
+      particlePointerTable[this->particlePos->Y][this->particlePos->X]
+          .lp->particlePos->X--;
+      this->particlePos->Y++;
+      this->particlePos->X++;
+    } else if ((flags & 0x40) == 0x40) {
+      particleTable[this->particlePos->Y][this->particlePos->X] = WATER;
+      particleTable[this->particlePos->Y + 1][this->particlePos->X - 1] = SAND;
+
+      particlePointerTable[this->particlePos->Y + 1][this->particlePos->X - 1]
+          .p =
+          particlePointerTable[this->particlePos->Y][this->particlePos->X].p;
+      particlePointerTable[this->particlePos->Y][this->particlePos->X].p =
+          nullptr;
+
+      particlePointerTable[this->particlePos->Y][this->particlePos->X].lp =
+          particlePointerTable[this->particlePos->Y + 1]
+                              [this->particlePos->X - 1]
+                                  .lp;
+      particlePointerTable[this->particlePos->Y + 1][this->particlePos->X - 1]
+          .lp = nullptr;
+
+      particlePointerTable[this->particlePos->Y][this->particlePos->X]
+          .lp->particlePos->Y--;
+      particlePointerTable[this->particlePos->Y][this->particlePos->X]
+          .lp->particlePos->X++;
+      this->particlePos->Y++;
+      this->particlePos->X--;
+    } else {
       return;
+    }
   }
 }
 
