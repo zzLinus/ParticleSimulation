@@ -1,3 +1,3 @@
-windows compile command : g++ -o olcExampleProgram.exe olcExampleProgram.cpp -luser32 -lgdi32 -lopengl32 -lgdiplus -lShlwapi -ldwmapi -lstdc++fs -static -std=c++17
+windows compile command : g++ -o SandSimu.exe main.cpp -luser32 -lgdi32 -lopengl32 -lgdiplus -lShlwapi -ldwmapi -lstdc++fs -static -std=c++17
 
-linux compile command : g++ -o olcExampleProgram olcExampleProgram.cpp -lX11 -lGL -lpthread -lpng -lstdc++fs -std=c++17
+linux compile command : g++ -o SandSimumain.cpp -lX11 -lGL -lpthread -lpng -lstdc++fs -std=c++17
