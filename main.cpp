@@ -43,8 +43,8 @@ private:
 class LiquidParticle : public Particle {
 public:
   LiquidParticle(uint8_t particleType, uint16_t X, uint16_t Y);
-  virtual void HandleMovement(uint8_t **particleTable,
-                              ParticlePointer **particlePointerTable);
+  void HandleMovement(uint8_t **particleTable,
+                      ParticlePointer **particlePointerTable);
   uint8_t floatDir;
 
 private:
@@ -205,8 +205,7 @@ void Particle::HandleMovement(uint8_t **particleTable,
   aroundPos[7].X = particlePos->X - 1;
   aroundPos[7].Y = particlePos->Y;
   uint16_t flags = 0;
-  if (this->particlePos->Y == 239 || this->particlePos->X == 0 ||
-      this->particlePos->X == 255)
+  if (this->particlePos->Y == 239)
     return;
 
   if (particleType == SAND) {
