@@ -112,7 +112,8 @@ void LiquidParticle::HandleMovement(uint8_t **particleTable,
   aroundPos[7].X = particlePos->X - 1;
   aroundPos[7].Y = particlePos->Y;
   uint16_t flags = 0;
-  if (this->particlePos->Y == 239)
+  if (this->particlePos->Y == 239 || this->particlePos->X == 0 ||
+      this->particlePos->X == 255)
     return;
 
   if (particleType == WATER) {
@@ -170,6 +171,8 @@ void LiquidParticle::HandleMovement(uint8_t **particleTable,
       particleTable[this->particlePos->Y][this->particlePos->X] = 10;
       this->particlePos->X++;
       particleTable[this->particlePos->Y][this->particlePos->X] = particleType;
+    } else {
+      return;
     }
   }
 }
@@ -202,7 +205,8 @@ void Particle::HandleMovement(uint8_t **particleTable,
   aroundPos[7].X = particlePos->X - 1;
   aroundPos[7].Y = particlePos->Y;
   uint16_t flags = 0;
-  if (this->particlePos->Y == 239)
+  if (this->particlePos->Y == 239 || this->particlePos->X == 0 ||
+      this->particlePos->X == 255)
     return;
 
   if (particleType == SAND) {
@@ -285,6 +289,7 @@ void Particle::HandleMovement(uint8_t **particleTable,
       particlePointerTable[this->particlePos->Y][this->particlePos->X]
           .lp->particlePos->Y--;
       this->particlePos->Y++;
+      return;
     } else if ((flags & 0x10) == 0x10) {
       particleTable[this->particlePos->Y][this->particlePos->X] = WATER;
       particleTable[this->particlePos->Y + 1][this->particlePos->X + 1] = SAND;
@@ -308,6 +313,7 @@ void Particle::HandleMovement(uint8_t **particleTable,
           .lp->particlePos->X--;
       this->particlePos->Y++;
       this->particlePos->X++;
+      return;
     } else if ((flags & 0x40) == 0x40) {
       particleTable[this->particlePos->Y][this->particlePos->X] = WATER;
       particleTable[this->particlePos->Y + 1][this->particlePos->X - 1] = SAND;
@@ -331,6 +337,7 @@ void Particle::HandleMovement(uint8_t **particleTable,
           .lp->particlePos->X++;
       this->particlePos->Y++;
       this->particlePos->X--;
+      return;
     } else {
       return;
     }
@@ -385,21 +392,32 @@ bool SandSimu::OnUserUpdate(float fElapsedTime) {
   if (GetMouse(0).bHeld) {
     this->mousePos->X = uint16_t(GetMouseX());
     this->mousePos->Y = uint16_t(GetMouseY());
-    Particle *p = new Particle(SAND, mousePos->X, mousePos->Y);
-    particleTable[mousePos->Y][mousePos->X] = SAND;
-    particlePointerTable[mousePos->Y][mousePos->X].p = p;
-    particles.push_back(p);
+    if (particleTable[mousePos->Y][mousePos->X] != 10)
+      ;
+    else {
+      Particle *p = new Particle(SAND, mousePos->X, mousePos->Y);
+      particleTable[mousePos->Y][mousePos->X] = SAND;
+      particlePointerTable[mousePos->Y][mousePos->X].p = p;
+      particles.push_back(p);
+    }
   } else if (GetMouse(1).bHeld) {
     this->mousePos->X = uint16_t(GetMouseX());
     this->mousePos->Y = uint16_t(GetMouseY());
-    LiquidParticle *p = new LiquidParticle(WATER, mousePos->X, mousePos->Y);
-    particleTable[mousePos->Y][mousePos->X] = WATER;
-    particlePointerTable[mousePos->Y][mousePos->X].lp = p;
-    liquidParticles.push_back(p);
+    if (particleTable[mousePos->Y][mousePos->X] != 10)
+      ;
+    else {
+      LiquidParticle *p = new LiquidParticle(WATER, mousePos->X, mousePos->Y);
+      particleTable[mousePos->Y][mousePos->X] = WATER;
+      particlePointerTable[mousePos->Y][mousePos->X].lp = p;
+      liquidParticles.push_back(p);
+    }
   } else if (GetMouse(2).bHeld) {
     for (int col = 0; col < ScreenHeight(); col++)
-      for (int row = 0; row < ScreenWidth(); row++)
+      for (int row = 0; row < ScreenWidth(); row++) {
         *(*(particleTable + col) + row) = 10;
+        (*(*(particlePointerTable + col) + row)).lp = nullptr;
+        (*(*(particlePointerTable + col) + row)).p = nullptr;
+      }
     particles.clear();
     liquidParticles.clear();
   }
